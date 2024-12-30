@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using RestSharp;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace TraductorPersonalAi
 {
@@ -18,24 +19,37 @@ namespace TraductorPersonalAi
         }
         private async Task<string> TranslateTextAsync(string text)
         {
-            var client = new RestClient(HuggingFaceAPIUrl);
-            var request = new RestRequest();
-            request.AddHeader("Authorization", $"Bearer {ApiKey}");
-            request.AddJsonBody(new { inputs = text });
+            // Obtener el texto a traducir desde un cuadro de texto (txtInputText por ejemplo)
+            string inputText = text;
 
-            // Usar RestRequest.Post() en lugar de Method.POST
-            request.Method = Method.Post;
+            // Ejecutar el script de Python
+            string pythonScript = @"D:\Programacion\Visual Studio\Modelo_AI\translate.py"; // Ruta completa al script de Python
+            string pythonInterpreter = @"C:\Users\Thecnomax\AppData\Local\Programs\Python\Python312\python.exe"; // Ruta al ejecutable de Python
 
-            var response = await client.ExecuteAsync(request);
-            if (response.IsSuccessful)
+            // Crear un proceso para ejecutar el script de Python
+            ProcessStartInfo startInfo = new ProcessStartInfo
             {
-                dynamic result = JsonConvert.DeserializeObject(response.Content);
-                return result[0].translation_text;
-            }
-            else
+                FileName = pythonInterpreter,
+                Arguments = $"\"{pythonScript}\" \"{inputText}\"", // Pasar el texto de entrada como argumento
+                RedirectStandardOutput = true,  // Capturar la salida
+                UseShellExecute = false,  // No usar la shell
+                CreateNoWindow = true  // No mostrar la ventana de la consola
+            };
+
+            Process process = new Process
             {
-                throw new Exception("Error al traducir el texto.");
-            }
+                StartInfo = startInfo
+            };
+
+            process.Start();
+
+            // Leer la salida del proceso
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            // Mostrar la traducción en un cuadro de texto (txtTranslatedText por ejemplo)
+            txtOutput.Text = output;
+            return txtOutput.Text;
         }
 
         private void txtFilePath_TextChanged(object sender, EventArgs e)
@@ -67,10 +81,16 @@ namespace TraductorPersonalAi
                 for (int i = 0; i < lines.Length; i += 30)
                 {
                     var block = new string[30];
+                    // Copiar hasta 30 líneas, o menos si llegamos al final del archivo
                     Array.Copy(lines, i, block, 0, Math.Min(30, lines.Length - i));
 
                     foreach (var line in block)
                     {
+                        if (string.IsNullOrWhiteSpace(line))
+                        {
+                            continue; // Saltar líneas vacías
+                        }
+
                         if (line.Contains("0000,0000,0000,,")) // Si contiene el marcador
                         {
                             string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
