@@ -10,7 +10,7 @@ namespace TraductorPersonalAi
 {
     public partial class Form1 : Form
     {
-        private const string HuggingFaceAPIUrl = "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-es-en";
+        private const string HuggingFaceAPIUrl = "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-es";
         private const string ApiKey = "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";  // Tu token de Hugging Face
         public Form1()
         {
@@ -71,7 +71,7 @@ namespace TraductorPersonalAi
 
                     foreach (var line in block)
                     {
-                        if (line.Contains("0000,0000,0000,,"))
+                        if (line.Contains("0000,0000,0000,,")) // Si contiene el marcador
                         {
                             string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
                             string translatedText = await TranslateTextAsync(textToTranslate);
@@ -88,7 +88,10 @@ namespace TraductorPersonalAi
                     progressBar.Value = progress;
                 }
 
-                // Guardar el archivo traducido
+                // Mostrar el contenido traducido en txtOutput
+                txtOutput.Text = translatedContent.ToString();
+
+                // Guardar el archivo traducido automáticamente si lo deseas
                 File.WriteAllText(outputFilePath, translatedContent.ToString());
                 MessageBox.Show("Traducción completa!");
             }
@@ -114,6 +117,7 @@ namespace TraductorPersonalAi
             saveFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
+                // Guardar el contenido de txtOutput (que ahora contiene el archivo traducido)
                 File.WriteAllText(saveFileDialog.FileName, txtOutput.Text);
                 MessageBox.Show("Archivo guardado exitosamente.");
             }
