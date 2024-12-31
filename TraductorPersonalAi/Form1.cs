@@ -6,6 +6,8 @@ using System.Windows.Forms;
 using RestSharp;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace TraductorPersonalAi
 {
@@ -17,41 +19,33 @@ namespace TraductorPersonalAi
         {
             InitializeComponent();
         }
-        private async Task<string> TranslateTextAsync(string text)
+        private async Task<List<string>> TranslateTextAsync(List<string> texts)
         {
-            // Obtener el texto a traducir desde un cuadro de texto (txtInputText por ejemplo)
-            string inputText = text;
+            string pythonScript = @"D:\Programacion\Visual Studio\Modelo_AI\ModeloRapido.py";
+            string pythonInterpreter = @"C:\Users\Thecnomax\AppData\Local\Programs\Python\Python312\python.exe";
 
-            // Ejecutar el script de Python
-            string pythonScript = @"D:\Programacion\Visual Studio\Modelo_AI\translate.py"; // Ruta completa al script de Python
-            string pythonInterpreter = @"C:\Users\Thecnomax\AppData\Local\Programs\Python\Python312\python.exe"; // Ruta al ejecutable de Python
+            // Combinar textos con separador
+            string inputText = string.Join("|||", texts);
 
-            // Crear un proceso para ejecutar el script de Python
+            // Configurar el proceso de Python
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = pythonInterpreter,
-                Arguments = $"\"{pythonScript}\" \"{inputText}\"", // Pasar el texto de entrada como argumento
-                RedirectStandardOutput = true,  // Capturar la salida
-                UseShellExecute = false,  // No usar la shell
-                CreateNoWindow = true  // No mostrar la ventana de la consola
+                Arguments = $"\"{pythonScript}\" \"{inputText}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
-            Process process = new Process
-            {
-                StartInfo = startInfo
-            };
-
+            Process process = new Process { StartInfo = startInfo };
             process.Start();
 
-            // Leer la salida del proceso
-            string output = process.StandardOutput.ReadToEnd();
+            // Leer y dividir la salida
+            string output = await process.StandardOutput.ReadToEndAsync();
             process.WaitForExit();
 
-            // Mostrar la traducción en un cuadro de texto (txtTranslatedText por ejemplo)
-            txtOutput.Text = output;
-            return txtOutput.Text;
+            return output.Split(new string[] { "|||" }, StringSplitOptions.None).ToList();
         }
-
         private void txtFilePath_TextChanged(object sender, EventArgs e)
         {
 
@@ -77,29 +71,41 @@ namespace TraductorPersonalAi
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 5 líneas
-                for (int i = 0; i < lines.Length; i += 1)
+                // Procesar el archivo en bloques de 10 líneas
+                const int batchSize = 10;
+                for (int i = 0; i < lines.Length; i += batchSize)
                 {
-                    var block = new string[1];
-                    // Copiar hasta 30 líneas, o menos si llegamos al final del archivo
-                    Array.Copy(lines, i, block, 0, Math.Min(1, lines.Length - i));
+                    var block = lines.Skip(i).Take(batchSize).ToArray();
 
+                    // Crear una lista de textos para traducir
+                    List<string> textsToTranslate = new List<string>();
                     foreach (var line in block)
                     {
-                        if (string.IsNullOrWhiteSpace(line))
-                        {
-                            continue; // Saltar líneas vacías
-                        }
-
-                        if (line.Contains("0000,0000,0000,,")) // Si contiene el marcador
+                        if (!string.IsNullOrWhiteSpace(line) && line.Contains("0000,0000,0000,,"))
                         {
                             string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
-                            string translatedText = await TranslateTextAsync(textToTranslate);
-                            translatedContent.AppendLine(line.Replace(textToTranslate, translatedText));
+                            textsToTranslate.Add(textToTranslate);
                         }
                         else
                         {
                             translatedContent.AppendLine(line);
+                        }
+                    }
+
+                    // Traducir los textos en bloque
+                    if (textsToTranslate.Any())
+                    {
+                        var translatedTexts = await TranslateTextAsync(textsToTranslate);
+
+                        // Reemplazar los textos traducidos en las líneas originales
+                        int translationIndex = 0;
+                        foreach (var line in block)
+                        {
+                            if (line.Contains("0000,0000,0000,,"))
+                            {
+                                string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
+                                translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
+                            }
                         }
                     }
 
@@ -111,7 +117,7 @@ namespace TraductorPersonalAi
                 // Mostrar el contenido traducido en txtOutput
                 txtOutput.Text = translatedContent.ToString();
 
-                // Guardar el archivo traducido automáticamente si lo deseas
+                // Guardar el archivo traducido
                 File.WriteAllText(outputFilePath, translatedContent.ToString());
                 MessageBox.Show("Traducción completa!");
             }
