@@ -77,12 +77,12 @@ namespace TraductorPersonalAi
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 30 líneas
-                for (int i = 0; i < lines.Length; i += 30)
+                // Procesar el archivo en bloques de 5 líneas
+                for (int i = 0; i < lines.Length; i += 1)
                 {
-                    var block = new string[30];
+                    var block = new string[1];
                     // Copiar hasta 30 líneas, o menos si llegamos al final del archivo
-                    Array.Copy(lines, i, block, 0, Math.Min(30, lines.Length - i));
+                    Array.Copy(lines, i, block, 0, Math.Min(1, lines.Length - i));
 
                     foreach (var line in block)
                     {
