@@ -66,13 +66,16 @@ namespace TraductorPersonalAi
             string inputFilePath = txtFilePath.Text; // Ruta del archivo .ass
             string outputFilePath = "output_translated.ass"; // Ruta de salida para el archivo traducido
 
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             try
             {
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 10 líneas
-                const int batchSize = 10;
+                // Procesar el archivo en bloques de 45 líneas
+                const int batchSize = 45; // Cambiar a 45 según se requiera
                 for (int i = 0; i < lines.Length; i += batchSize)
                 {
                     var block = lines.Skip(i).Take(batchSize).ToArray();
@@ -83,11 +86,22 @@ namespace TraductorPersonalAi
                     {
                         if (!string.IsNullOrWhiteSpace(line) && line.Contains("0000,0000,0000,,"))
                         {
-                            string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
-                            textsToTranslate.Add(textToTranslate);
+                            // Validar que la división contiene un texto después del separador
+                            var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
+                            if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
+                            {
+                                string textToTranslate = splitParts[1];
+                                textsToTranslate.Add(textToTranslate);
+                            }
+                            else
+                            {
+                                // Si no hay texto después del separador, copiar línea original
+                                translatedContent.AppendLine(line);
+                            }
                         }
                         else
                         {
+                            // Copiar líneas que no necesitan traducción
                             translatedContent.AppendLine(line);
                         }
                     }
@@ -103,15 +117,24 @@ namespace TraductorPersonalAi
                         {
                             if (line.Contains("0000,0000,0000,,"))
                             {
-                                string textToTranslate = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None)[1];
-                                translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
+                                var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
+                                if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
+                                {
+                                    string textToTranslate = splitParts[1];
+                                    translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
+                                }
+                                else
+                                {
+                                    // Copiar línea original si no se puede procesar
+                                    translatedContent.AppendLine(line);
+                                }
                             }
                         }
                     }
 
                     // Actualizar progreso
-                    int progress = (int)((i / (float)lines.Length) * 100);
-                    progressBar.Value = progress;
+                    int progress = (int)(((i + batchSize) / (float)lines.Length) * 100);
+                    progressBar.Value = Math.Min(progress, 100);
                 }
 
                 // Mostrar el contenido traducido en txtOutput
@@ -125,7 +148,15 @@ namespace TraductorPersonalAi
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+            finally
+            {
+                stopwatch.Stop();
+                TimeSpan elapsed = stopwatch.Elapsed;
+                string elapsedTime = string.Format("{0} minutos con {1} segundos", elapsed.Minutes, elapsed.Seconds);
+                MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
+            }
         }
+
 
         private void progressBar_Click(object sender, EventArgs e)
         {
