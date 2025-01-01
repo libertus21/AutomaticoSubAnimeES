@@ -60,7 +60,6 @@ namespace TraductorPersonalAi
                 txtFilePath.Text = openFileDialog.FileName;
             }
         }
-
         private async void btnTranslate_Click(object sender, EventArgs e)
         {
             string inputFilePath = txtFilePath.Text; // Ruta del archivo .ass
@@ -74,44 +73,47 @@ namespace TraductorPersonalAi
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 45 líneas
-                const int batchSize = 80; // Cambiar a 45 según se requiera
-                for (int i = 0; i < lines.Length; i += batchSize)
-                {
-                    var block = lines.Skip(i).Take(batchSize).ToArray();
+                // Tamaño del lote (ajústalo según las capacidades del servicio de traducción)
+                const int batchSize = 285;
 
-                    // Crear una lista de textos para traducir
+                // Dividir líneas en bloques
+                var blocks = lines.Select((line, index) => new { line, index })
+                                  .GroupBy(x => x.index / batchSize)
+                                  .Select(g => g.Select(x => x.line).ToArray())
+                                  .ToList();
+
+                // Procesar los bloques en paralelo
+                var translationTasks = blocks.Select(async block =>
+                {
+                    StringBuilder blockResult = new StringBuilder();
                     List<string> textsToTranslate = new List<string>();
+
                     foreach (var line in block)
                     {
                         if (!string.IsNullOrWhiteSpace(line) && line.Contains("0000,0000,0000,,"))
                         {
-                            // Validar que la división contiene un texto después del separador
                             var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
                             if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
                             {
-                                string textToTranslate = splitParts[1];
-                                textsToTranslate.Add(textToTranslate);
+                                textsToTranslate.Add(splitParts[1]);
                             }
                             else
                             {
-                                // Si no hay texto después del separador, copiar línea original
-                                translatedContent.AppendLine(line);
+                                blockResult.AppendLine(line);
                             }
                         }
                         else
                         {
-                            // Copiar líneas que no necesitan traducción
-                            translatedContent.AppendLine(line);
+                            blockResult.AppendLine(line);
                         }
                     }
 
-                    // Traducir los textos en bloque
+                    // Traducir los textos del bloque
                     if (textsToTranslate.Any())
                     {
                         var translatedTexts = await TranslateTextAsync(textsToTranslate);
-
                         int translationIndex = 0;
+
                         foreach (var line in block)
                         {
                             if (line.Contains("0000,0000,0000,,"))
@@ -119,32 +121,30 @@ namespace TraductorPersonalAi
                                 var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
                                 if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
                                 {
-                                    if (translationIndex < translatedTexts.Count)
-                                    {
-                                        string textToTranslate = splitParts[1];
-                                        translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
-                                    }
-                                    else
-                                    {
-                                        // Manejar caso donde no hay traducción suficiente
-                                        translatedContent.AppendLine(line);
-                                    }
+                                    blockResult.AppendLine(line.Replace(splitParts[1], translatedTexts[translationIndex++]));
                                 }
                                 else
                                 {
-                                    translatedContent.AppendLine(line);
+                                    blockResult.AppendLine(line);
                                 }
                             }
                             else
                             {
-                                translatedContent.AppendLine(line);
+                                blockResult.AppendLine(line);
                             }
                         }
                     }
 
-                    // Actualizar progreso
-                    int progress = (int)(((i + batchSize) / (float)lines.Length) * 100);
-                    progressBar.Value = Math.Min(progress, 100);
+                    return blockResult.ToString();
+                });
+
+                // Esperar a que todos los bloques se procesen
+                var results = await Task.WhenAll(translationTasks);
+
+                // Combinar todos los resultados
+                foreach (var result in results)
+                {
+                    translatedContent.Append(result);
                 }
 
                 // Mostrar el contenido traducido en txtOutput
@@ -166,6 +166,7 @@ namespace TraductorPersonalAi
                 MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
             }
         }
+
 
 
         private void progressBar_Click(object sender, EventArgs e)
