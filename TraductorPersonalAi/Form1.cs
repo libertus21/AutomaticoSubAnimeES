@@ -63,8 +63,23 @@ namespace TraductorPersonalAi
 
         private async void btnTranslate_Click(object sender, EventArgs e)
         {
-            string inputFilePath = txtFilePath.Text; // Ruta del archivo .ass
-            string outputFilePath = "output_translated.ass"; // Ruta de salida para el archivo traducido
+            // Desactivar el botón para evitar múltiples ejecuciones
+            btnTranslate.Enabled = false;
+
+            string inputFilePath = txtFilePath.Text; // Tomar la ruta desde el TextBox
+
+            if (string.IsNullOrWhiteSpace(inputFilePath))
+            {
+                MessageBox.Show("Por favor, selecciona un archivo primero.");
+                btnTranslate.Enabled = true; // Reactivar el botón
+                return;
+            }
+
+            // Generar el nombre del archivo de salida con el sufijo "_translated"
+            string outputFilePath = Path.Combine(
+                Path.GetDirectoryName(inputFilePath),
+                $"{Path.GetFileNameWithoutExtension(inputFilePath)}_traducido{Path.GetExtension(inputFilePath)}"
+            );
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -74,8 +89,8 @@ namespace TraductorPersonalAi
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 45 líneas
-                const int batchSize = 80; // Cambiar a 45 según se requiera
+                // Procesar el archivo en bloques de 80 líneas
+                const int batchSize = 80;
                 for (int i = 0; i < lines.Length; i += batchSize)
                 {
                     var block = lines.Skip(i).Take(batchSize).ToArray();
@@ -143,7 +158,7 @@ namespace TraductorPersonalAi
 
                 // Guardar el archivo traducido
                 File.WriteAllText(outputFilePath, translatedContent.ToString());
-                MessageBox.Show("Traducción completa!");
+                MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
             }
             catch (Exception ex)
             {
@@ -155,8 +170,12 @@ namespace TraductorPersonalAi
                 TimeSpan elapsed = stopwatch.Elapsed;
                 string elapsedTime = string.Format("{0} minutos con {1} segundos", elapsed.Minutes, elapsed.Seconds);
                 MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
+
+                // Reactivar el botón después de completar el proceso
+                btnTranslate.Enabled = true;
             }
         }
+
 
 
 
