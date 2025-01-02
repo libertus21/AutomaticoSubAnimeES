@@ -1,64 +1,64 @@
 # TraductorPersonal
 
-**AutomaticoSubAnimeEs** es una herramienta que automatiza el proceso de traducir archivos de subtítulos en formato `.ass` de inglés a español utilizando un modelo de inteligencia artificial local. El modelo usado es proporcionado por [Helsinki-NLP](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main).
+**AutomaticoSubAnimeEs** es una herramienta avanzada que automatiza la traducción de archivos de subtítulos en formato `.ass` del inglés al español mediante el uso de un modelo de inteligencia artificial local. Este proyecto aprovecha el modelo de traducción de [Helsinki-NLP](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main), aunque permite la flexibilidad de integrar otros modelos adaptados a tus necesidades.
 
-## Características
+## Características principales
 
-- Traducción rápida y precisa de archivos `.ass`.
-- Funcionamiento local sin necesidad de conexión constante a internet.
-- Integración con modelos de Hugging Face.
+- Traducción rápida y precisa de subtítulos en formato `.ass`.
+- Funcionamiento completamente local, eliminando la necesidad de conexión constante a internet.
+- Soporte para integrar otros modelos de Hugging Face o personalizados.
 
 ## Requisitos previos
 
-Antes de comenzar, asegúrate de tener instalados los siguientes componentes:
+Antes de comenzar, asegúrate de cumplir con los siguientes requisitos:
 
-- Python 3.8 o superior
-- `pip` (Administrador de paquetes de Python)
-- Tener un modelo AI enfocado a traducir texto ingles a español, se ua Helsinki-NLP pero se puede usar otros modelos AI para la traducciones
+- **Python**: Versión 3.8 o superior.
+- **pip**: Administrador de paquetes para Python.
+- **Modelo AI**: Se recomienda usar el modelo de Helsinki-NLP para traducción de inglés a español, pero puedes emplear cualquier otro modelo compatible.
 
-### Librerías requeridas
+### Instalación de dependencias
 
-Ejecuta el siguiente comando para instalar las dependencias:
-
-```bash
-pip install transformers torch
-pip install sentencepiece
-pip install sacremoses 
-```
-
-## Instalación
-
-1. Clona el repositorio en tu máquina local:
+Para instalar las librerías requeridas, ejecuta el siguiente comando:
 
 ```bash
-git clone https://github.com/tu_usuario/TraductorPersonal.git
-cd TraductorPersonal
+pip install transformers torch sentencepiece sacremoses
 ```
 
-2. Descarga el modelo de Hugging Face:
+## Instalación del proyecto
 
-El script descargará automáticamente el modelo de Hugging Face, pero puedes hacerlo manualmente si lo prefieres. Sigue las instrucciones [aquí](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main).
+1. **Clonar el repositorio**
 
-3. Edita las rutas en el proyecto:
+   Descarga el código fuente en tu máquina local:
 
-   - **Abrir y editar el archivo `ModeloAI/ModeloRapido.py`**:
-     - Ubicado en la carpeta `ModeloAI`.
-     - Modifica la línea:
-       ```python
-       model_path = "Ruta"
+   ```bash
+   git clone https://github.com/libertus21/AutomaticoSubAnimeES.git
+   cd TraductorPersonal
+   ```
+
+2. **Descargar el modelo AI**
+
+   El script puede descargar automáticamente el modelo de Hugging Face. Si prefieres hacerlo manualmente, visita [Helsinki-NLP/opus-mt-en-es](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main) y sigue las instrucciones de descarga.
+
+3. **Configurar rutas en el proyecto**
+
+   - **Archivo `ModeloAI/ModeloRapido.py`**:
+     Edita la línea donde se define la ruta del modelo:
+     ```python
+     model_path = "Ruta"
+     ```
+     Reemplaza `"Ruta"` con la ubicación exacta donde se encuentra el modelo descargado.
+
+   - **Archivo `Form1.cs`**:
+     Localiza y actualiza las siguientes líneas en la función `TranslateTextAsync`:
+     - **Ruta del script Python**:
+       ```csharp
+       string pythonScript = @"C:\Ruta\A\Tu\ModeloRapido.py";
        ```
-       Reemplaza esta ruta con la ubicación exacta de tu modelo descargado de Hugging Face.
+     - **Ruta del intérprete de Python**:
+       ```csharp
+       string pythonInterpreter = @"C:\Ruta\A\Tu\Python\python.exe";
+       ```
 
-   - **Abrir y editar el archivo `Form1.cs`**:
-     - Localiza la función `TranslateTextAsync` y actualiza las siguientes líneas:
-       - Ruta del script Python (`ModeloRapido.py`):
-         ```csharp
-         string pythonScript = @"C:\Ruta\A\Tu\ModeloRapido.py";
-         ```
-       - Ruta del intérprete Python (`python.exe`):
-         ```csharp
-         string pythonInterpreter = @"C:\Ruta\A\Tu\Python\python.exe";
-         ```
-         4. Ejecutar el programa y empezar la traduccion automatica.
+4. **Ejecutar el programa**
 
-
+   Una vez configuradas las rutas, ejecuta el programa para comenzar la traducción automatizada.
