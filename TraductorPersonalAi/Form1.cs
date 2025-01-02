@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
 
 namespace TraductorPersonalAi
 {
@@ -63,8 +64,23 @@ namespace TraductorPersonalAi
 
         private async void btnTranslate_Click(object sender, EventArgs e)
         {
-            string inputFilePath = txtFilePath.Text; // Ruta del archivo .ass
-            string outputFilePath = "output_translated.ass"; // Ruta de salida para el archivo traducido
+            // Desactivar el botón para evitar múltiples ejecuciones
+            btnTranslate.Enabled = false;
+
+            string inputFilePath = txtFilePath.Text; // Tomar la ruta desde el TextBox
+
+            if (string.IsNullOrWhiteSpace(inputFilePath))
+            {
+                MessageBox.Show("Por favor, selecciona un archivo primero.");
+                btnTranslate.Enabled = true; // Reactivar el botón
+                return;
+            }
+
+            // Generar el nombre del archivo de salida con el sufijo "_translated"
+            string outputFilePath = Path.Combine(
+                Path.GetDirectoryName(inputFilePath),
+                $"{Path.GetFileNameWithoutExtension(inputFilePath)}_traducido{Path.GetExtension(inputFilePath)}"
+            );
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -74,35 +90,36 @@ namespace TraductorPersonalAi
                 string[] lines = File.ReadAllLines(inputFilePath);
                 StringBuilder translatedContent = new StringBuilder();
 
-                // Procesar el archivo en bloques de 45 líneas
-                const int batchSize = 80; // Cambiar a 45 según se requiera
+                // Procesar el archivo en bloques de 80 líneas
+                const int batchSize = 80;
                 for (int i = 0; i < lines.Length; i += batchSize)
                 {
                     var block = lines.Skip(i).Take(batchSize).ToArray();
 
                     // Crear una lista de textos para traducir
                     List<string> textsToTranslate = new List<string>();
-                    foreach (var line in block)
+                    List<int> linesToTranslateIndices = new List<int>(); // Índices de las líneas que requieren traducción
+
+                    for (int j = 0; j < block.Length; j++)
                     {
-                        if (!string.IsNullOrWhiteSpace(line) && line.Contains("0000,0000,0000,,"))
+                        var line = block[j];
+                        if (line.Contains("0000,0000,0000,,"))
                         {
-                            // Validar que la división contiene un texto después del separador
                             var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
                             if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
                             {
-                                string textToTranslate = splitParts[1];
+                                string textToTranslate = splitParts[1].Trim();
                                 textsToTranslate.Add(textToTranslate);
+                                linesToTranslateIndices.Add(j); // Guardar el índice de la línea para actualización
                             }
                             else
                             {
-                                // Si no hay texto después del separador, copiar línea original
-                                translatedContent.AppendLine(line);
+                                translatedContent.AppendLine(line); // Si no hay texto, copiar línea original
                             }
                         }
                         else
                         {
-                            // Copiar líneas que no necesitan traducción
-                            translatedContent.AppendLine(line);
+                            translatedContent.AppendLine(line); // Copiar líneas que no necesitan traducción
                         }
                     }
 
@@ -111,35 +128,25 @@ namespace TraductorPersonalAi
                     {
                         var translatedTexts = await TranslateTextAsync(textsToTranslate);
 
-                        int translationIndex = 0;
-                        foreach (var line in block)
+                        for (int j = 0; j < linesToTranslateIndices.Count; j++)
                         {
-                            if (line.Contains("0000,0000,0000,,"))
+                            int lineIndex = linesToTranslateIndices[j];
+                            var originalLine = block[lineIndex];
+                            var splitParts = originalLine.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
+
+                            // Sustituir el texto original por la traducción
+                            if (j < translatedTexts.Count)
                             {
-                                var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-                                if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
-                                {
-                                    if (translationIndex < translatedTexts.Count)
-                                    {
-                                        string textToTranslate = splitParts[1];
-                                        translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
-                                    }
-                                    else
-                                    {
-                                        // Manejar caso donde no hay traducción suficiente
-                                        translatedContent.AppendLine(line);
-                                    }
-                                }
-                                else
-                                {
-                                    translatedContent.AppendLine(line);
-                                }
-                            }
-                            else
-                            {
-                                translatedContent.AppendLine(line);
+                                var translatedLine = $"{splitParts[0]}0000,0000,0000,,{translatedTexts[j]}";
+                                block[lineIndex] = translatedLine;
                             }
                         }
+                    }
+
+                    // Agregar el bloque procesado al contenido traducido
+                    foreach (var line in block)
+                    {
+                        translatedContent.AppendLine(line);
                     }
 
                     // Actualizar progreso
@@ -152,7 +159,8 @@ namespace TraductorPersonalAi
 
                 // Guardar el archivo traducido
                 File.WriteAllText(outputFilePath, translatedContent.ToString());
-                MessageBox.Show("Traducción completa!");
+                ShowNotification($"Traducción completa! Archivo guardado en");
+                MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
             }
             catch (Exception ex)
             {
@@ -164,7 +172,29 @@ namespace TraductorPersonalAi
                 TimeSpan elapsed = stopwatch.Elapsed;
                 string elapsedTime = string.Format("{0} minutos con {1} segundos", elapsed.Minutes, elapsed.Seconds);
                 MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
+
+                // Reactivar el botón después de completar el proceso
+                btnTranslate.Enabled = true;
             }
+        }
+
+        private void ShowNotification(string message)
+        {
+            // Crear un objeto de notificación en la bandeja del sistema
+            NotifyIcon notifyIcon = new NotifyIcon
+            {
+                Icon = SystemIcons.Information, // Puedes cambiar el ícono si lo deseas
+                Visible = true,
+                BalloonTipTitle = "Traducción",
+                BalloonTipText = message,
+                BalloonTipIcon = ToolTipIcon.Info
+            };
+
+            // Mostrar la notificación
+            notifyIcon.ShowBalloonTip(3000); // 3000ms = 3 segundos
+
+            // Asegurarse de ocultar el icono después de mostrar la notificación
+            notifyIcon.Dispose();
         }
 
 
