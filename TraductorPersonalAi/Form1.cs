@@ -82,27 +82,28 @@ namespace TraductorPersonalAi
 
                     // Crear una lista de textos para traducir
                     List<string> textsToTranslate = new List<string>();
-                    foreach (var line in block)
+                    List<int> linesToTranslateIndices = new List<int>(); // Índices de las líneas que requieren traducción
+
+                    for (int j = 0; j < block.Length; j++)
                     {
-                        if (!string.IsNullOrWhiteSpace(line) && line.Contains("0000,0000,0000,,"))
+                        var line = block[j];
+                        if (line.Contains("0000,0000,0000,,"))
                         {
-                            // Validar que la división contiene un texto después del separador
                             var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
                             if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
                             {
-                                string textToTranslate = splitParts[1];
+                                string textToTranslate = splitParts[1].Trim();
                                 textsToTranslate.Add(textToTranslate);
+                                linesToTranslateIndices.Add(j); // Guardar el índice de la línea para actualización
                             }
                             else
                             {
-                                // Si no hay texto después del separador, copiar línea original
-                                translatedContent.AppendLine(line);
+                                translatedContent.AppendLine(line); // Si no hay texto, copiar línea original
                             }
                         }
                         else
                         {
-                            // Copiar líneas que no necesitan traducción
-                            translatedContent.AppendLine(line);
+                            translatedContent.AppendLine(line); // Copiar líneas que no necesitan traducción
                         }
                     }
 
@@ -111,35 +112,25 @@ namespace TraductorPersonalAi
                     {
                         var translatedTexts = await TranslateTextAsync(textsToTranslate);
 
-                        int translationIndex = 0;
-                        foreach (var line in block)
+                        for (int j = 0; j < linesToTranslateIndices.Count; j++)
                         {
-                            if (line.Contains("0000,0000,0000,,"))
+                            int lineIndex = linesToTranslateIndices[j];
+                            var originalLine = block[lineIndex];
+                            var splitParts = originalLine.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
+
+                            // Sustituir el texto original por la traducción
+                            if (j < translatedTexts.Count)
                             {
-                                var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-                                if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
-                                {
-                                    if (translationIndex < translatedTexts.Count)
-                                    {
-                                        string textToTranslate = splitParts[1];
-                                        translatedContent.AppendLine(line.Replace(textToTranslate, translatedTexts[translationIndex++]));
-                                    }
-                                    else
-                                    {
-                                        // Manejar caso donde no hay traducción suficiente
-                                        translatedContent.AppendLine(line);
-                                    }
-                                }
-                                else
-                                {
-                                    translatedContent.AppendLine(line);
-                                }
-                            }
-                            else
-                            {
-                                translatedContent.AppendLine(line);
+                                var translatedLine = $"{splitParts[0]}0000,0000,0000,,{translatedTexts[j]}";
+                                block[lineIndex] = translatedLine;
                             }
                         }
+                    }
+
+                    // Agregar el bloque procesado al contenido traducido
+                    foreach (var line in block)
+                    {
+                        translatedContent.AppendLine(line);
                     }
 
                     // Actualizar progreso
@@ -166,6 +157,7 @@ namespace TraductorPersonalAi
                 MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
             }
         }
+
 
 
         private void progressBar_Click(object sender, EventArgs e)
