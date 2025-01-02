@@ -74,9 +74,7 @@ cd TraductorPersonal
 
 El script descargará automáticamente el modelo de Hugging Face, pero puedes hacerlo manualmente si lo prefieres. Sigue las instrucciones [aquí](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main).
 
-3. Asegúrate de que los archivos `.ass` que deseas traducir estén en la carpeta adecuada.
-
-4. Edita las rutas en el proyecto:
+3. Edita las rutas en el proyecto:
 
    - **Abrir y editar el archivo `ModeloAI/ModeloRapido.py`**:
      - Ubicado en la carpeta `ModeloAI`.
@@ -96,60 +94,4 @@ El script descargará automáticamente el modelo de Hugging Face, pero puedes ha
          ```csharp
          string pythonInterpreter = @"C:\Ruta\A\Tu\Python\python.exe";
          ```
-## Uso
-
-1. Coloca el archivo `.ass` que deseas traducir en el directorio raíz del proyecto.
-
-2. Ejecuta el script principal:
-
-```bash
-python traductor.py --archivo "ruta/del/archivo.ass"
-```
-
-### Opciones disponibles
-
-- `--archivo`: Ruta del archivo `.ass` a traducir (obligatorio).
-- `--salida`: Ruta del archivo de salida traducido (opcional).
-
-Por ejemplo:
-
-```bash
-python traductor.py --archivo "subtitulos.ass" --salida "subtitulos_traducidos.ass"
-```
-
-## Ejemplo
-
-Si tienes un archivo llamado `subtitulos.ass`, simplemente ejecuta:
-
-```bash
-python traductor.py --archivo "subtitulos.ass"
-```
-
-Esto generará un nuevo archivo llamado `subtitulos_traducidos.ass` en el mismo directorio.
-
-## Contribuir
-
-¡Las contribuciones son bienvenidas! Si deseas agregar nuevas características o corregir errores, sigue estos pasos:
-
-1. Haz un fork del repositorio.
-2. Crea una rama para tu nueva funcionalidad:
-
-```bash
-git checkout -b nueva-funcionalidad
-```
-
-3. Realiza los cambios necesarios y haz commit:
-
-```bash
-git commit -m "Descripción de los cambios"
-```
-
-4. Envía tus cambios con un pull request.
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más información.
-
----
-
-Si tienes dudas o sugerencias, no dudes en abrir un issue en este repositorio.
+         4. Ejecutar el programa y empezar la traduccion automatica.
