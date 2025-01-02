@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
 
 namespace TraductorPersonalAi
 {
@@ -158,6 +159,7 @@ namespace TraductorPersonalAi
 
                 // Guardar el archivo traducido
                 File.WriteAllText(outputFilePath, translatedContent.ToString());
+                ShowNotification($"Traducción completa! Archivo guardado en");
                 MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
             }
             catch (Exception ex)
@@ -176,7 +178,24 @@ namespace TraductorPersonalAi
             }
         }
 
+        private void ShowNotification(string message)
+        {
+            // Crear un objeto de notificación en la bandeja del sistema
+            NotifyIcon notifyIcon = new NotifyIcon
+            {
+                Icon = SystemIcons.Information, // Puedes cambiar el ícono si lo deseas
+                Visible = true,
+                BalloonTipTitle = "Traducción",
+                BalloonTipText = message,
+                BalloonTipIcon = ToolTipIcon.Info
+            };
 
+            // Mostrar la notificación
+            notifyIcon.ShowBalloonTip(3000); // 3000ms = 3 segundos
+
+            // Asegurarse de ocultar el icono después de mostrar la notificación
+            notifyIcon.Dispose();
+        }
 
 
         private void progressBar_Click(object sender, EventArgs e)
