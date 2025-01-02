@@ -14,6 +14,7 @@ Antes de comenzar, asegúrate de tener instalados los siguientes componentes:
 
 - Python 3.8 o superior
 - `pip` (Administrador de paquetes de Python)
+- Tener un modelo AI enfocado a traducir texto ingles a español, se ua Helsinki-NLP pero se puede usar otros modelos AI para la traducciones
 
 ### Librerías requeridas
 
@@ -28,11 +29,6 @@ pip install sacremoses
 ## Instalación
 
 1. Clona el repositorio en tu máquina local:
-
-```bash
-git clone https://github.com/tu_usuario/TraductorPersonal.git
-cd TraductorPersonal
-```
 
 2. Descarga el modelo de Hugging Face:
 
