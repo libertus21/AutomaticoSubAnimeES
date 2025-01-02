@@ -1,4 +1,4 @@
-# TraductorPersonal
+# AutomaticoSubAnimeEs
 
 **AutomaticoSubAnimeEs** es una herramienta avanzada que automatiza la traducción de archivos de subtítulos en formato `.ass` del inglés al español mediante el uso de un modelo de inteligencia artificial local. Este proyecto aprovecha el modelo de traducción de [Helsinki-NLP](https://huggingface.co/Helsinki-NLP/opus-mt-en-es/tree/main), aunque permite la flexibilidad de integrar otros modelos adaptados a tus necesidades.
 
