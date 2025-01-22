@@ -9,7 +9,9 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Drawing;
-
+using UglyToad.PdfPig; // Nuevo para leer PDFs
+using iTextSharp.text; // Para escribir PDFs
+using iTextSharp.text.pdf;
 namespace TraductorPersonalAi
 {
     public partial class Form1 : Form
@@ -55,7 +57,7 @@ namespace TraductorPersonalAi
         private void btnBrowse_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            openFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf"; // Cambiar filtro
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 txtFilePath.Text = openFileDialog.FileName;
@@ -64,22 +66,19 @@ namespace TraductorPersonalAi
 
         private async void btnTranslate_Click(object sender, EventArgs e)
         {
-            // Desactivar el botón para evitar múltiples ejecuciones
             btnTranslate.Enabled = false;
-
-            string inputFilePath = txtFilePath.Text; // Tomar la ruta desde el TextBox
+            string inputFilePath = txtFilePath.Text;
 
             if (string.IsNullOrWhiteSpace(inputFilePath))
             {
                 MessageBox.Show("Por favor, selecciona un archivo primero.");
-                btnTranslate.Enabled = true; // Reactivar el botón
+                btnTranslate.Enabled = true;
                 return;
             }
 
-            // Generar el nombre del archivo de salida con el sufijo "_translated"
             string outputFilePath = Path.Combine(
                 Path.GetDirectoryName(inputFilePath),
-                $"{Path.GetFileNameWithoutExtension(inputFilePath)}_traducido{Path.GetExtension(inputFilePath)}"
+                $"{Path.GetFileNameWithoutExtension(inputFilePath)}_traducido.pdf"
             );
 
             Stopwatch stopwatch = new Stopwatch();
@@ -87,79 +86,35 @@ namespace TraductorPersonalAi
 
             try
             {
-                string[] lines = File.ReadAllLines(inputFilePath);
-                StringBuilder translatedContent = new StringBuilder();
-
-                // Procesar el archivo en bloques de 80 líneas
-                const int batchSize = 80;
-                for (int i = 0; i < lines.Length; i += batchSize)
+                // Leer PDF usando PdfPig
+                var translatedParagraphs = new List<string>();
+                using (var pdf = UglyToad.PdfPig.PdfDocument.Open(inputFilePath))
                 {
-                    var block = lines.Skip(i).Take(batchSize).ToArray();
+                    int totalPages = pdf.NumberOfPages;
+                    int currentPage = 0;
 
-                    // Crear una lista de textos para traducir
-                    List<string> textsToTranslate = new List<string>();
-                    List<int> linesToTranslateIndices = new List<int>(); // Índices de las líneas que requieren traducción
-
-                    for (int j = 0; j < block.Length; j++)
+                    foreach (var page in pdf.GetPages())
                     {
-                        var line = block[j];
-                        if (line.Contains("0000,0000,0000,,"))
-                        {
-                            var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-                            if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
-                            {
-                                string textToTranslate = splitParts[1].Trim();
-                                textsToTranslate.Add(textToTranslate);
-                                linesToTranslateIndices.Add(j); // Guardar el índice de la línea para actualización
-                            }
-                            else
-                            {
-                                translatedContent.AppendLine(line); // Si no hay texto, copiar línea original
-                            }
-                        }
-                        else
-                        {
-                            translatedContent.AppendLine(line); // Copiar líneas que no necesitan traducción
-                        }
+                        currentPage++;
+                        var text = page.Text;
+
+                        // Dividir en chunks de 500 caracteres para manejar mejor la traducción
+                        var chunks = SplitText(text, 500);
+
+                        // Traducir cada chunk
+                        var translatedChunks = await TranslateTextAsync(chunks);
+
+                        // Unir los chunks traducidos
+                        translatedParagraphs.Add(string.Join(" ", translatedChunks));
+
+                        // Actualizar progreso
+                        progressBar.Value = (int)((currentPage / (double)totalPages) * 100);
                     }
-
-                    // Traducir los textos en bloque
-                    if (textsToTranslate.Any())
-                    {
-                        var translatedTexts = await TranslateTextAsync(textsToTranslate);
-
-                        for (int j = 0; j < linesToTranslateIndices.Count; j++)
-                        {
-                            int lineIndex = linesToTranslateIndices[j];
-                            var originalLine = block[lineIndex];
-                            var splitParts = originalLine.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-
-                            // Sustituir el texto original por la traducción
-                            if (j < translatedTexts.Count)
-                            {
-                                var translatedLine = $"{splitParts[0]}0000,0000,0000,,{translatedTexts[j]}";
-                                block[lineIndex] = translatedLine;
-                            }
-                        }
-                    }
-
-                    // Agregar el bloque procesado al contenido traducido
-                    foreach (var line in block)
-                    {
-                        translatedContent.AppendLine(line);
-                    }
-
-                    // Actualizar progreso
-                    int progress = (int)(((i + batchSize) / (float)lines.Length) * 100);
-                    progressBar.Value = Math.Min(progress, 100);
                 }
 
-                // Mostrar el contenido traducido en txtOutput
-                txtOutput.Text = translatedContent.ToString();
-
-                // Guardar el archivo traducido
-                File.WriteAllText(outputFilePath, translatedContent.ToString());
-                ShowNotification($"Traducción completa! Archivo guardado en");
+                // Crear PDF traducido usando iTextSharp
+                CreateTranslatedPdf(outputFilePath, translatedParagraphs);
+                
                 MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
             }
             catch (Exception ex)
@@ -175,6 +130,36 @@ namespace TraductorPersonalAi
 
                 // Reactivar el botón después de completar el proceso
                 btnTranslate.Enabled = true;
+            }
+        }
+        private List<string> SplitText(string text, int chunkSize)
+        {
+            var chunks = new List<string>();
+            for (int i = 0; i < text.Length; i += chunkSize)
+            {
+                chunks.Add(text.Substring(i, Math.Min(chunkSize, text.Length - i)));
+            }
+            return chunks;
+        }
+
+        private void CreateTranslatedPdf(string outputPath, List<string> paragraphs)
+        {
+            using (var fs = new FileStream(outputPath, FileMode.Create))
+            {
+                var document = new Document();
+                var writer = PdfWriter.GetInstance(document, fs);
+
+                document.Open();
+
+                var font = FontFactory.GetFont(FontFactory.HELVETICA, 12);
+
+                foreach (var paragraph in paragraphs)
+                {
+                    document.Add(new Paragraph(paragraph, font));
+                    document.Add(Chunk.NEWLINE);
+                }
+
+                document.Close();
             }
         }
 
