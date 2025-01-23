@@ -55,56 +55,7 @@ namespace TraductorPersonalAi
         private void txtFilePath_TextChanged(object sender, EventArgs e)
         {
 
-        }
-
-        private void btnBrowse_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-
-            if (radioAss.Checked)
-                openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
-            else
-                openFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf";
-
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                txtFilePath.Text = openFileDialog.FileName;
-            }
-        }
-        private async void btnTranslate_Click(object sender, EventArgs e)
-        {
-            btnTranslate.Enabled = false;
-            string inputFilePath = txtFilePath.Text;
-
-            if (string.IsNullOrWhiteSpace(inputFilePath))
-            {
-                MessageBox.Show("Por favor, selecciona un archivo primero.");
-                btnTranslate.Enabled = true;
-                return;
-            }
-
-            try
-            {
-                if (radioAss.Checked)
-                {
-                    // Lógica de traducción para ASS
-                    await TranslateAssFile(inputFilePath);
-                }
-                else
-                {
-                    // Lógica de traducción para PDF
-                    await TranslatePdfFile(inputFilePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-            finally
-            {
-                btnTranslate.Enabled = true;
-            }
-        }
+        }    
 
         private async Task TranslateAssFile(string inputFilePath)
         {
@@ -377,6 +328,57 @@ namespace TraductorPersonalAi
         private void txtOutput_TextChanged_1(object sender, EventArgs e)
         {
 
+        }
+
+        private async void btnBrowse_Click_1(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            if (radioAss.Checked)
+                openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            else
+                openFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                txtFilePath.Text = openFileDialog.FileName;
+            }
+
+        }
+
+        private async void btnTranslate_Click_1(object sender, EventArgs e)
+        {
+            btnTranslate.Enabled = false;
+            string inputFilePath = txtFilePath.Text;
+
+            if (string.IsNullOrWhiteSpace(inputFilePath))
+            {
+                MessageBox.Show("Por favor, selecciona un archivo primero.");
+                btnTranslate.Enabled = true;
+                return;
+            }
+
+            try
+            {
+                if (radioAss.Checked)
+                {
+                    // Lógica de traducción para ASS
+                    await TranslateAssFile(inputFilePath);
+                }
+                else
+                {
+                    // Lógica de traducción para PDF
+                    await TranslatePdfFile(inputFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+            finally
+            {
+                btnTranslate.Enabled = true;
+            }
         }
     }
 }
