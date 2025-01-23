@@ -52,10 +52,7 @@ namespace TraductorPersonalAi
 
             return output.Split(new string[] { "|||" }, StringSplitOptions.None).ToList();
         }
-        private void txtFilePath_TextChanged(object sender, EventArgs e)
-        {
-
-        }    
+   
 
         private async Task TranslateAssFile(string inputFilePath)
         {
@@ -226,62 +223,7 @@ namespace TraductorPersonalAi
             }
         }
 
-        private List<string> SplitLongLine(string text, BaseFont font, float fontSize, float maxWidth)
-        {
-            var lines = new List<string>();
-            var words = text.Split(' ');
-            var currentLine = new StringBuilder();
-
-            foreach (var word in words)
-            {
-                string testLine = currentLine.Length > 0 ? $"{currentLine} {word}" : word;
-                float testWidth = font.GetWidthPoint(testLine, fontSize);
-
-                if (testWidth <= maxWidth)
-                {
-                    currentLine.Append(currentLine.Length > 0 ? $" {word}" : word);
-                }
-                else
-                {
-                    lines.Add(currentLine.ToString());
-                    currentLine.Clear();
-                    currentLine.Append(word);
-                }
-            }
-
-            if (currentLine.Length > 0) lines.Add(currentLine.ToString());
-            return lines;
-        }
-        private List<string> SplitText(string text, int chunkSize)
-        {
-            var chunks = new List<string>();
-            for (int i = 0; i < text.Length; i += chunkSize)
-            {
-                chunks.Add(text.Substring(i, Math.Min(chunkSize, text.Length - i)));
-            }
-            return chunks;
-        }
-
-        private void CreateTranslatedPdf(string outputPath, List<string> paragraphs)
-        {
-            using (var fs = new FileStream(outputPath, FileMode.Create))
-            {
-                var document = new Document();
-                var writer = PdfWriter.GetInstance(document, fs);
-
-                document.Open();
-
-                var font = FontFactory.GetFont(FontFactory.HELVETICA, 12);
-
-                foreach (var paragraph in paragraphs)
-                {
-                    document.Add(new Paragraph(paragraph, font));
-                    document.Add(Chunk.NEWLINE);
-                }
-
-                document.Close();
-            }
-        }
+       
 
         private void ShowNotification(string message)
         {
@@ -302,17 +244,6 @@ namespace TraductorPersonalAi
             notifyIcon.Dispose();
         }
 
-
-        private void progressBar_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtOutput_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
@@ -325,10 +256,7 @@ namespace TraductorPersonalAi
             }
         }
 
-        private void txtOutput_TextChanged_1(object sender, EventArgs e)
-        {
-
-        }
+      
 
         private async void btnBrowse_Click_1(object sender, EventArgs e)
         {
