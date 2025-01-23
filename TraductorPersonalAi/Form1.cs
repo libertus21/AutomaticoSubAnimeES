@@ -99,7 +99,15 @@ namespace TraductorPersonalAi
                     // Configurar fuente Unicode (Arial)
                     var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "arial.ttf");
                     var baseFont = BaseFont.CreateFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-
+                    if (!File.Exists(fontPath))
+                    {
+                        // Usar una fuente estándar de iTextSharp si Arial no está disponible
+                        baseFont = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.EMBEDDED);
+                    }
+                    else
+                    {
+                        baseFont = BaseFont.CreateFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                    }
                     foreach (var page in pdf.GetPages())
                     {
                         currentPage++;
@@ -137,8 +145,10 @@ namespace TraductorPersonalAi
                         for (int i = 0; i < translatedLines.Count; i++)
                         {
                             float maxWidth = linePositions[i].Right - linePositions[i].X;
-                            float fontSize = 12f;
+                            float fontSize = 12f; // Tamaño fijo
                             string translatedText = translatedLines[i];
+
+
 
                             // 1. Ajustar tamaño de fuente
                             float textWidth = baseFont.GetWidthPoint(translatedText, fontSize);
@@ -219,11 +229,8 @@ namespace TraductorPersonalAi
                 }
                 else
                 {
-                    if (currentLine.Length > 0)
-                    {
-                        lines.Add(currentLine.ToString());
-                        currentLine.Clear();
-                    }
+                    lines.Add(currentLine.ToString());
+                    currentLine.Clear();
                     currentLine.Append(word);
                 }
             }
