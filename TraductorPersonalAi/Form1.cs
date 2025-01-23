@@ -12,6 +12,7 @@ using System.Drawing;
 using UglyToad.PdfPig; // Nuevo para leer PDFs
 using iTextSharp.text; // Para escribir PDFs
 using iTextSharp.text.pdf;
+using UglyToad.PdfPig.Content;
 namespace TraductorPersonalAi
 {
     public partial class Form1 : Form
@@ -86,35 +87,70 @@ namespace TraductorPersonalAi
 
             try
             {
-                // Leer PDF usando PdfPig
-                var translatedParagraphs = new List<string>();
                 using (var pdf = UglyToad.PdfPig.PdfDocument.Open(inputFilePath))
+                using (var fs = new FileStream(outputFilePath, FileMode.Create))
                 {
+                    var document = new Document();
+                    var writer = PdfWriter.GetInstance(document, fs);
+                    document.Open();
+
                     int totalPages = pdf.NumberOfPages;
                     int currentPage = 0;
 
                     foreach (var page in pdf.GetPages())
                     {
                         currentPage++;
-                        var text = page.Text;
+                        var words = page.GetWords().ToList();
 
-                        // Dividir en chunks de 500 caracteres para manejar mejor la traducción
-                        var chunks = SplitText(text, 500);
+                        // Agrupar palabras por línea (posición Y)
+                        var lineGroups = words
+                            .GroupBy(w => Math.Round(w.BoundingBox.Bottom, 1))
+                            .OrderByDescending(g => g.Key); // Orden descendente para coordenadas PDF
 
-                        // Traducir cada chunk
-                        var translatedChunks = await TranslateTextAsync(chunks);
+                        var originalLines = new List<string>();
+                        var linePositions = new List<(float X, float Y)>();
 
-                        // Unir los chunks traducidos
-                        translatedParagraphs.Add(string.Join(" ", translatedChunks));
+                        foreach (var group in lineGroups)
+                        {
+                            var orderedWords = group.OrderBy(w => w.BoundingBox.Left);
+                            originalLines.Add(string.Join(" ", orderedWords.Select(w => w.Text)));
+                            linePositions.Add((
+                                (float)orderedWords.First().BoundingBox.Left,
+                                (float)group.Key // Usamos la posición Y de la línea
+                            ));
+                        }
 
-                        // Actualizar progreso
+                        // Traducir líneas
+                        var translatedLines = await TranslateTextAsync(originalLines);
+
+                        // Crear nueva página con el mismo tamaño
+                        document.SetPageSize(new iTextSharp.text.Rectangle((float)page.Width, (float)page.Height));
+                        document.NewPage();
+
+                        // Escribir texto traducido
+                        var cb = writer.DirectContent;
+                        var font = BaseFont.CreateFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+                        cb.SetFontAndSize(font, 12);
+
+                        for (int i = 0; i < translatedLines.Count; i++)
+                        {
+                            cb.BeginText();
+                            cb.ShowTextAligned(
+                                PdfContentByte.ALIGN_LEFT,
+                                translatedLines[i],
+                                linePositions[i].X,
+                                linePositions[i].Y,
+                                0
+                            );
+                            cb.EndText();
+                        }
+
                         progressBar.Value = (int)((currentPage / (double)totalPages) * 100);
                     }
+
+                    document.Close();
                 }
 
-                // Crear PDF traducido usando iTextSharp
-                CreateTranslatedPdf(outputFilePath, translatedParagraphs);
-                
                 MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
             }
             catch (Exception ex)
@@ -124,11 +160,7 @@ namespace TraductorPersonalAi
             finally
             {
                 stopwatch.Stop();
-                TimeSpan elapsed = stopwatch.Elapsed;
-                string elapsedTime = string.Format("{0} minutos con {1} segundos", elapsed.Minutes, elapsed.Seconds);
-                MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
-
-                // Reactivar el botón después de completar el proceso
+                MessageBox.Show($"Tiempo total: {stopwatch.Elapsed:mm\\:ss} minutos");
                 btnTranslate.Enabled = true;
             }
         }
