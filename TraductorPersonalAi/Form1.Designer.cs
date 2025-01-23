@@ -3,7 +3,8 @@
     partial class Form1
     {
         private System.ComponentModel.IContainer components = null;
-
+        private System.Windows.Forms.RadioButton radioAss;
+        private System.Windows.Forms.RadioButton radioPdf;
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -17,6 +18,7 @@
 
         private void InitializeComponent()
         {
+
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.txtFilePath = new System.Windows.Forms.TextBox();
             this.btnBrowse = new System.Windows.Forms.Button();
@@ -35,6 +37,37 @@
             this.panelOutput.SuspendLayout();
             this.panelButtons.SuspendLayout();
             this.SuspendLayout();
+
+            this.radioAss = new System.Windows.Forms.RadioButton();
+            this.radioPdf = new System.Windows.Forms.RadioButton();
+
+            // Dentro de panelInput
+            this.panelInput.Controls.Add(this.radioAss);
+            this.panelInput.Controls.Add(this.radioPdf);
+
+            // 
+            // radioAss
+            // 
+            this.radioAss.AutoSize = true;
+            this.radioAss.Checked = true;
+            this.radioAss.Location = new System.Drawing.Point(530, 60);
+            this.radioAss.Name = "radioAss";
+            this.radioAss.Size = new System.Drawing.Size(50, 23);
+            this.radioAss.TabIndex = 4;
+            this.radioAss.TabStop = true;
+            this.radioAss.Text = ".ASS";
+            this.radioAss.UseVisualStyleBackColor = true;
+            // 
+            // radioPdf
+            // 
+            this.radioPdf.AutoSize = true;
+            this.radioPdf.Location = new System.Drawing.Point(530, 85);
+            this.radioPdf.Name = "radioPdf";
+            this.radioPdf.Size = new System.Drawing.Size(51, 23);
+            this.radioPdf.TabIndex = 5;
+            this.radioPdf.Text = "PDF";
+            this.radioPdf.UseVisualStyleBackColor = true;
+
             // 
             // txtFilePath
             // 
