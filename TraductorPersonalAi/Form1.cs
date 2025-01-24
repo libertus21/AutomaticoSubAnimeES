@@ -15,6 +15,7 @@ using iTextSharp.text.pdf;
 using UglyToad.PdfPig.Content;
 using TraductorPersonalAi.Traduccion.Ass;
 using TraductorPersonalAi.Traduccion.PDF;
+using TraductorPersonalAi.Python;
 namespace TraductorPersonalAi
 {
     public partial class Form1 : Form
@@ -25,25 +26,49 @@ namespace TraductorPersonalAi
 
         private AssTranslator _assTranslator;
         private PdfTranslator _pdfTranslator;
+        private readonly PythonTranslationService _pythonService;
 
         public Form1()
         {
             InitializeComponent();
+            _pythonService = InitializePythonService(); // Asignación directa
             InitializeTranslators();
         }
+
+        private PythonTranslationService InitializePythonService()
+        {
+            const string pythonInterpreter = @"C:\Users\Thecnomax\AppData\Local\Programs\Python\Python312\python.exe";
+            const string pythonScript = @"D:\Programacion\Visual Studio\Modelo_AI\ModeloRapido.py";
+
+            return new PythonTranslationService(pythonInterpreter, pythonScript);
+        }
+
 
         private void InitializeTranslators()
         {
             _assTranslator = new AssTranslator(
-                TranslateTextAsync,
-                progress => progressBar.Value = progress,
-                content => txtOutput.Text = content
-            );
+     _pythonService.TranslateAsync,
+     progress => progressBar.Value = progress,
+     content => txtOutput.Text = content
+ );
 
             _pdfTranslator = new PdfTranslator(
-                TranslateTextAsync,
+                _pythonService.TranslateAsync,
                 progress => progressBar.Value = progress
             );
+
+
+            //version con traduciones exacta
+           // _assTranslator = new AssTranslator(
+           //    TranslateTextAsync,
+           //    progress => progressBar.Value = progress,
+           //    content => txtOutput.Text = content
+           //);
+
+           // _pdfTranslator = new PdfTranslator(
+           //     TranslateTextAsync,
+           //     progress => progressBar.Value = progress
+           // );
         }
         private async Task<List<string>> TranslateTextAsync(List<string> texts)
         {
