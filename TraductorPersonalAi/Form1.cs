@@ -9,16 +9,66 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Drawing;
-
+using UglyToad.PdfPig; // Nuevo para leer PDFs
+using iTextSharp.text; // Para escribir PDFs
+using iTextSharp.text.pdf;
+using UglyToad.PdfPig.Content;
+using TraductorPersonalAi.Traduccion.Ass;
+using TraductorPersonalAi.Traduccion.PDF;
+using TraductorPersonalAi.Python;
 namespace TraductorPersonalAi
 {
     public partial class Form1 : Form
     {
         private const string HuggingFaceAPIUrl = "https://api-inference.huggingface.co/models/Helsinki-NLP/opus-mt-en-es";
         private const string ApiKey = "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";  // Tu token de Hugging Face
+        private string outputFilePath; // ← Añadir esta línea
+
+        private AssTranslator _assTranslator;
+        private PdfTranslator _pdfTranslator;
+        private readonly PythonTranslationService _pythonService;
+
         public Form1()
         {
             InitializeComponent();
+            _pythonService = InitializePythonService(); // Asignación directa
+            InitializeTranslators();
+        }
+
+        private PythonTranslationService InitializePythonService()
+        {
+            const string pythonInterpreter = @"C:\Users\Thecnomax\AppData\Local\Programs\Python\Python312\python.exe";
+            const string pythonScript = @"D:\Programacion\Visual Studio\Modelo_AI\ModeloRapido.py";
+
+            return new PythonTranslationService(pythonInterpreter, pythonScript);
+        }
+
+
+        private void InitializeTranslators()
+        {
+            _assTranslator = new AssTranslator(
+     _pythonService.TranslateAsync,
+     progress => progressBar.Value = progress,
+     content => txtOutput.Text = content
+ );
+
+            _pdfTranslator = new PdfTranslator(
+                _pythonService.TranslateAsync,
+                progress => progressBar.Value = progress
+            );
+
+
+            //version con traduciones exacta
+           // _assTranslator = new AssTranslator(
+           //    TranslateTextAsync,
+           //    progress => progressBar.Value = progress,
+           //    content => txtOutput.Text = content
+           //);
+
+           // _pdfTranslator = new PdfTranslator(
+           //     TranslateTextAsync,
+           //     progress => progressBar.Value = progress
+           // );
         }
         private async Task<List<string>> TranslateTextAsync(List<string> texts)
         {
@@ -47,137 +97,6 @@ namespace TraductorPersonalAi
 
             return output.Split(new string[] { "|||" }, StringSplitOptions.None).ToList();
         }
-        private void txtFilePath_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnBrowse_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                txtFilePath.Text = openFileDialog.FileName;
-            }
-        }
-
-        private async void btnTranslate_Click(object sender, EventArgs e)
-        {
-            // Desactivar el botón para evitar múltiples ejecuciones
-            btnTranslate.Enabled = false;
-
-            string inputFilePath = txtFilePath.Text; // Tomar la ruta desde el TextBox
-
-            if (string.IsNullOrWhiteSpace(inputFilePath))
-            {
-                MessageBox.Show("Por favor, selecciona un archivo primero.");
-                btnTranslate.Enabled = true; // Reactivar el botón
-                return;
-            }
-
-            // Generar el nombre del archivo de salida con el sufijo "_translated"
-            string outputFilePath = Path.Combine(
-                Path.GetDirectoryName(inputFilePath),
-                $"{Path.GetFileNameWithoutExtension(inputFilePath)}_traducido{Path.GetExtension(inputFilePath)}"
-            );
-
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-
-            try
-            {
-                string[] lines = File.ReadAllLines(inputFilePath);
-                StringBuilder translatedContent = new StringBuilder();
-
-                // Procesar el archivo en bloques de 80 líneas
-                const int batchSize = 80;
-                for (int i = 0; i < lines.Length; i += batchSize)
-                {
-                    var block = lines.Skip(i).Take(batchSize).ToArray();
-
-                    // Crear una lista de textos para traducir
-                    List<string> textsToTranslate = new List<string>();
-                    List<int> linesToTranslateIndices = new List<int>(); // Índices de las líneas que requieren traducción
-
-                    for (int j = 0; j < block.Length; j++)
-                    {
-                        var line = block[j];
-                        if (line.Contains("0000,0000,0000,,"))
-                        {
-                            var splitParts = line.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-                            if (splitParts.Length > 1 && !string.IsNullOrWhiteSpace(splitParts[1]))
-                            {
-                                string textToTranslate = splitParts[1].Trim();
-                                textsToTranslate.Add(textToTranslate);
-                                linesToTranslateIndices.Add(j); // Guardar el índice de la línea para actualización
-                            }
-                            else
-                            {
-                                translatedContent.AppendLine(line); // Si no hay texto, copiar línea original
-                            }
-                        }
-                        else
-                        {
-                            translatedContent.AppendLine(line); // Copiar líneas que no necesitan traducción
-                        }
-                    }
-
-                    // Traducir los textos en bloque
-                    if (textsToTranslate.Any())
-                    {
-                        var translatedTexts = await TranslateTextAsync(textsToTranslate);
-
-                        for (int j = 0; j < linesToTranslateIndices.Count; j++)
-                        {
-                            int lineIndex = linesToTranslateIndices[j];
-                            var originalLine = block[lineIndex];
-                            var splitParts = originalLine.Split(new string[] { "0000,0000,0000,," }, StringSplitOptions.None);
-
-                            // Sustituir el texto original por la traducción
-                            if (j < translatedTexts.Count)
-                            {
-                                var translatedLine = $"{splitParts[0]}0000,0000,0000,,{translatedTexts[j]}";
-                                block[lineIndex] = translatedLine;
-                            }
-                        }
-                    }
-
-                    // Agregar el bloque procesado al contenido traducido
-                    foreach (var line in block)
-                    {
-                        translatedContent.AppendLine(line);
-                    }
-
-                    // Actualizar progreso
-                    int progress = (int)(((i + batchSize) / (float)lines.Length) * 100);
-                    progressBar.Value = Math.Min(progress, 100);
-                }
-
-                // Mostrar el contenido traducido en txtOutput
-                txtOutput.Text = translatedContent.ToString();
-
-                // Guardar el archivo traducido
-                File.WriteAllText(outputFilePath, translatedContent.ToString());
-                ShowNotification($"Traducción completa! Archivo guardado en");
-                MessageBox.Show($"Traducción completa! Archivo guardado en:\n{outputFilePath}");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-            finally
-            {
-                stopwatch.Stop();
-                TimeSpan elapsed = stopwatch.Elapsed;
-                string elapsedTime = string.Format("{0} minutos con {1} segundos", elapsed.Minutes, elapsed.Seconds);
-                MessageBox.Show($"Tiempo de ejecución: {elapsedTime}");
-
-                // Reactivar el botón después de completar el proceso
-                btnTranslate.Enabled = true;
-            }
-        }
-
         private void ShowNotification(string message)
         {
             // Crear un objeto de notificación en la bandeja del sistema
@@ -197,17 +116,6 @@ namespace TraductorPersonalAi
             notifyIcon.Dispose();
         }
 
-
-        private void progressBar_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtOutput_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
@@ -220,9 +128,74 @@ namespace TraductorPersonalAi
             }
         }
 
-        private void txtOutput_TextChanged_1(object sender, EventArgs e)
+      
+
+        private async void btnBrowse_Click_1(object sender, EventArgs e)
         {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            if (radioAss.Checked)
+                openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            else
+                openFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                txtFilePath.Text = openFileDialog.FileName;
+            }
 
         }
+
+        private async void btnTranslate_Click_1(object sender, EventArgs e)
+        {
+            btnTranslate.Enabled = false;
+            string inputFilePath = txtFilePath.Text;
+            progressBar.Value = 0;
+
+            //Verificar cuanto tiempo dura la ejeccucion codigo
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            //
+            try
+            {
+                if (string.IsNullOrWhiteSpace(inputFilePath))
+                {
+                    MessageBox.Show("Por favor, selecciona un archivo primero.");
+                    return;
+                }
+
+                outputFilePath = GetOutputPath(inputFilePath);
+
+                if (radioAss.Checked)
+                {
+                    await _assTranslator.TranslateAsync(inputFilePath, outputFilePath);
+                    ShowNotification("Traducción ASS completada!");
+                }
+                else
+                {
+                    await _pdfTranslator.TranslateAsync(inputFilePath, outputFilePath);
+                    ShowNotification("Traducción PDF completada!");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+            finally
+            {
+                btnTranslate.Enabled = true;
+                stopwatch.Stop();
+                MessageBox.Show($"Tiempo Ejeccucion: {stopwatch.Elapsed:mm\\:ss} minutos");
+            }
+        }
+        private string GetOutputPath(string inputPath)
+        {
+            string extension = radioAss.Checked ? ".ass" : ".pdf";
+            return Path.Combine(
+                Path.GetDirectoryName(inputPath),
+                $"{Path.GetFileNameWithoutExtension(inputPath)}_traducido{extension}"
+            );
+        }
+
     }
 }
