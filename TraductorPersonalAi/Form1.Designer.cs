@@ -14,6 +14,7 @@
             this.grpOptions = new System.Windows.Forms.GroupBox();
             this.radioPdf = new System.Windows.Forms.RadioButton();
             this.radioAss = new System.Windows.Forms.RadioButton();
+            this.radioSrt = new System.Windows.Forms.RadioButton();
             this.txtPrompt = new System.Windows.Forms.TextBox();
             this.grpFile = new System.Windows.Forms.GroupBox();
             this.btnBrowse = new System.Windows.Forms.Button();
@@ -83,6 +84,7 @@
             // 
             this.grpOptions.Controls.Add(this.radioPdf);
             this.grpOptions.Controls.Add(this.radioAss);
+            this.grpOptions.Controls.Add(this.radioSrt);
             this.grpOptions.Controls.Add(this.txtPrompt);
             this.grpOptions.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpOptions.Location = new System.Drawing.Point(23, 109);
@@ -113,6 +115,16 @@
             this.radioAss.TabStop = true;
             this.radioAss.Text = ".ASS";
             this.radioAss.UseVisualStyleBackColor = true;
+            // 
+            // radioSrt
+            // 
+            this.radioSrt.AutoSize = true;
+            this.radioSrt.Location = new System.Drawing.Point(590, 90);
+            this.radioSrt.Name = "radioSrt";
+            this.radioSrt.Size = new System.Drawing.Size(51, 21);
+            this.radioSrt.TabIndex = 2;
+            this.radioSrt.Text = ".SRT";
+            this.radioSrt.UseVisualStyleBackColor = true;
             // 
             // txtPrompt
             // 
@@ -269,6 +281,7 @@
         private System.Windows.Forms.GroupBox grpOptions;
         private System.Windows.Forms.RadioButton radioPdf;
         private System.Windows.Forms.RadioButton radioAss;
+        private System.Windows.Forms.RadioButton radioSrt;
         private System.Windows.Forms.TextBox txtPrompt;
         private System.Windows.Forms.GroupBox grpOutput;
         private System.Windows.Forms.TextBox txtOutput;

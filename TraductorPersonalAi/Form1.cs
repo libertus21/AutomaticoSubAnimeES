@@ -15,6 +15,7 @@ using iTextSharp.text.pdf;
 using UglyToad.PdfPig.Content;
 using TraductorPersonalAi.Traduccion.Ass;
 using TraductorPersonalAi.Traduccion.PDF;
+using TraductorPersonalAi.Traduccion.SRT;
 using TraductorPersonalAi.Python;
 namespace TraductorPersonalAi
 {
@@ -26,6 +27,7 @@ namespace TraductorPersonalAi
 
         private AssTranslator _assTranslator;
         private PdfTranslator _pdfTranslator;
+        private SrtTranslator _srtTranslator;
         private readonly PythonTranslationService _pythonService;
 
         public Form1()
@@ -55,6 +57,12 @@ namespace TraductorPersonalAi
             _pdfTranslator = new PdfTranslator(
                 _pythonService.TranslateAsync,
                 progress => progressBar.Value = progress
+            );
+
+            _srtTranslator = new SrtTranslator(
+                _pythonService.TranslateAsync,
+                progress => progressBar.Value = progress,
+                content => txtOutput.Text = content
             );
 
 
@@ -119,7 +127,14 @@ namespace TraductorPersonalAi
         private void btnSave_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            
+            if (radioAss.Checked)
+                saveFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            else if (radioSrt.Checked)
+                saveFileDialog.Filter = "Archivos de subtítulos (*.srt)|*.srt";
+            else
+                saveFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf";
+                
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 // Guardar el contenido de txtOutput (que ahora contiene el archivo traducido)
@@ -136,6 +151,8 @@ namespace TraductorPersonalAi
 
             if (radioAss.Checked)
                 openFileDialog.Filter = "Archivos de subtítulos (*.ass)|*.ass";
+            else if (radioSrt.Checked)
+                openFileDialog.Filter = "Archivos de subtítulos (*.srt)|*.srt";
             else
                 openFileDialog.Filter = "Archivos PDF (*.pdf)|*.pdf";
 
@@ -171,6 +188,11 @@ namespace TraductorPersonalAi
                     await _assTranslator.TranslateAsync(inputFilePath, outputFilePath);
                     ShowNotification("Traducción ASS completada!");
                 }
+                else if (radioSrt.Checked)
+                {
+                    await _srtTranslator.TranslateAsync(inputFilePath, outputFilePath);
+                    ShowNotification("Traducción SRT completada!");
+                }
                 else
                 {
                     await _pdfTranslator.TranslateAsync(inputFilePath, outputFilePath);
@@ -190,7 +212,14 @@ namespace TraductorPersonalAi
         }
         private string GetOutputPath(string inputPath)
         {
-            string extension = radioAss.Checked ? ".ass" : ".pdf";
+            string extension;
+            if (radioAss.Checked)
+                extension = ".ass";
+            else if (radioSrt.Checked)
+                extension = ".srt";
+            else
+                extension = ".pdf";
+                
             return Path.Combine(
                 Path.GetDirectoryName(inputPath),
                 $"{Path.GetFileNameWithoutExtension(inputPath)}_traducido{extension}"
