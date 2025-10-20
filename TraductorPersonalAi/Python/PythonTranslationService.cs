@@ -155,10 +155,11 @@ namespace TraductorPersonalAi.Python
 
         private List<string> CleanOutput(string output)
         {
-            return output.Split(new[] { "|||" }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(t => t.Trim().Normalize(NormalizationForm.FormC))
-                        .Where(t => !string.IsNullOrWhiteSpace(t))
-                        .ToList();
+            // Mantener posiciones incluso si alguna traducción viene vacía
+            var parts = output.Split(new[] { "|||" }, StringSplitOptions.None)
+                               .Select(t => t == null ? string.Empty : t.Trim().Normalize(NormalizationForm.FormC))
+                               .ToList();
+            return parts;
         }
 
         private void ValidatePaths()

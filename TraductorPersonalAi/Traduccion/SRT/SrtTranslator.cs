@@ -27,26 +27,55 @@ namespace TraductorPersonalAi.Traduccion.SRT
 
             try
             {
+                // Leer todo el archivo y localizar todas las líneas de texto reales
                 string[] lines = File.ReadAllLines(inputFilePath);
-                StringBuilder translatedContent = new StringBuilder();
+                var textLineIndices = new List<int>();
+                var textsToTranslate = new List<string>();
 
-                const int batchSize = 80;
-                for (int i = 0; i < lines.Length; i += batchSize)
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    var block = lines.Skip(i).Take(batchSize).ToArray();
-                    var (textsToTranslate, linesToTranslateIndices) = ProcessBlock(block);
-
-                    if (textsToTranslate.Any())
+                    var trimmed = lines[i].Trim();
+                    if (string.IsNullOrWhiteSpace(trimmed) || IsNumber(trimmed) || IsTimeLine(trimmed))
                     {
-                        var translatedTexts = await _translateTextAsync(textsToTranslate);
-                        ApplyTranslations(block, linesToTranslateIndices, translatedTexts);
+                        continue;
                     }
-
-                    AppendBlockContent(block, translatedContent);
-                    UpdateProgress(i + batchSize, lines.Length);
+                    textLineIndices.Add(i);
+                    textsToTranslate.Add(lines[i]); // mantener formato original de la línea
                 }
 
-                FinalizeTranslation(outputFilePath, translatedContent);
+                if (textsToTranslate.Any())
+                {
+                    var translatedTexts = await _translateTextAsync(textsToTranslate);
+
+                    int applied = 0;
+                    int total = textLineIndices.Count;
+                    for (int k = 0; k < total; k++)
+                    {
+                        int idx = textLineIndices[k];
+                        string original = lines[idx];
+                        string translated = k < translatedTexts.Count ? translatedTexts[k] : string.Empty;
+
+                        // Evitar romper SRT: forzar una sola línea sustituyendo saltos por espacio
+                        if (!string.IsNullOrEmpty(translated))
+                        {
+                            translated = translated.Replace("\r", " ").Replace("\n", " ");
+                        }
+
+                        // Si la traducción viene vacía, conservar la original para no desalinear
+                        lines[idx] = string.IsNullOrWhiteSpace(translated) ? original : translated;
+
+                        applied++;
+                        UpdateProgress(applied, total);
+                    }
+                }
+
+                // Escribir salida final
+                var sb = new StringBuilder();
+                foreach (var line in lines)
+                {
+                    sb.AppendLine(line);
+                }
+                FinalizeTranslation(outputFilePath, sb);
             }
             finally
             {

@@ -82,11 +82,14 @@ namespace TraductorPersonalAi.Traduccion.Ass
                 int lineIndex = indices[j];
                 var originalLine = block[lineIndex];
                 var splitParts = originalLine.Split(new[] { "0000,0000,0000,," }, StringSplitOptions.None);
-
-                if (j < translations.Count)
+                string translated = j < translations.Count ? translations[j] : string.Empty;
+                if (!string.IsNullOrEmpty(translated))
                 {
-                    block[lineIndex] = $"{splitParts[0]}0000,0000,0000,,{translations[j]}";
+                    translated = translated.Replace("\r", " ").Replace("\n", " ");
                 }
+                string originalText = splitParts.Length > 1 ? splitParts[1] : string.Empty;
+                string finalText = string.IsNullOrWhiteSpace(translated) ? originalText : translated;
+                block[lineIndex] = $"{splitParts[0]}0000,0000,0000,,{finalText}";
             }
         }
 
