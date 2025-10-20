@@ -125,6 +125,7 @@
     <Compile Include="Python\PythonTranslationService.cs" />
     <Compile Include="Traduccion\.Ass\AssTranslator.cs" />
     <Compile Include="Traduccion\PDF\PdfTranslator.cs" />
+    <Compile Include="Traduccion\SRT\SrtTranslator.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

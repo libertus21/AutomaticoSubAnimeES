@@ -14,6 +14,10 @@
             this.grpOptions = new System.Windows.Forms.GroupBox();
             this.radioPdf = new System.Windows.Forms.RadioButton();
             this.radioAss = new System.Windows.Forms.RadioButton();
+            this.radioSrt = new System.Windows.Forms.RadioButton();
+            this.grpProcessing = new System.Windows.Forms.GroupBox();
+            this.radioSingleFile = new System.Windows.Forms.RadioButton();
+            this.radioFolder = new System.Windows.Forms.RadioButton();
             this.txtPrompt = new System.Windows.Forms.TextBox();
             this.grpFile = new System.Windows.Forms.GroupBox();
             this.btnBrowse = new System.Windows.Forms.Button();
@@ -49,6 +53,7 @@
             // 
             this.panelContent.Controls.Add(this.grpOutput);
             this.panelContent.Controls.Add(this.grpOptions);
+            this.panelContent.Controls.Add(this.grpProcessing);
             this.panelContent.Controls.Add(this.grpFile);
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Location = new System.Drawing.Point(0, 80);
@@ -61,7 +66,7 @@
             // 
             this.grpOutput.Controls.Add(this.txtOutput);
             this.grpOutput.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.grpOutput.Location = new System.Drawing.Point(23, 235);
+            this.grpOutput.Location = new System.Drawing.Point(23, 340);
             this.grpOutput.Name = "grpOutput";
             this.grpOutput.Size = new System.Drawing.Size(754, 200);
             this.grpOutput.TabIndex = 2;
@@ -83,6 +88,7 @@
             // 
             this.grpOptions.Controls.Add(this.radioPdf);
             this.grpOptions.Controls.Add(this.radioAss);
+            this.grpOptions.Controls.Add(this.radioSrt);
             this.grpOptions.Controls.Add(this.txtPrompt);
             this.grpOptions.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpOptions.Location = new System.Drawing.Point(23, 109);
@@ -90,7 +96,19 @@
             this.grpOptions.Size = new System.Drawing.Size(754, 120);
             this.grpOptions.TabIndex = 1;
             this.grpOptions.TabStop = false;
-            this.grpOptions.Text = "Opciones";
+            this.grpOptions.Text = "Tipo de Archivo";
+            // 
+            // grpProcessing
+            // 
+            this.grpProcessing.Controls.Add(this.radioSingleFile);
+            this.grpProcessing.Controls.Add(this.radioFolder);
+            this.grpProcessing.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpProcessing.Location = new System.Drawing.Point(23, 245);
+            this.grpProcessing.Name = "grpProcessing";
+            this.grpProcessing.Size = new System.Drawing.Size(754, 80);
+            this.grpProcessing.TabIndex = 3;
+            this.grpProcessing.TabStop = false;
+            this.grpProcessing.Text = "Modo de Procesamiento";
             // 
             // radioPdf
             // 
@@ -113,6 +131,38 @@
             this.radioAss.TabStop = true;
             this.radioAss.Text = ".ASS";
             this.radioAss.UseVisualStyleBackColor = true;
+            // 
+            // radioSrt
+            // 
+            this.radioSrt.AutoSize = true;
+            this.radioSrt.Location = new System.Drawing.Point(590, 90);
+            this.radioSrt.Name = "radioSrt";
+            this.radioSrt.Size = new System.Drawing.Size(51, 21);
+            this.radioSrt.TabIndex = 2;
+            this.radioSrt.Text = ".SRT";
+            this.radioSrt.UseVisualStyleBackColor = true;
+            // 
+            // radioSingleFile
+            // 
+            this.radioSingleFile.AutoSize = true;
+            this.radioSingleFile.Checked = true;
+            this.radioSingleFile.Location = new System.Drawing.Point(20, 30);
+            this.radioSingleFile.Name = "radioSingleFile";
+            this.radioSingleFile.Size = new System.Drawing.Size(120, 21);
+            this.radioSingleFile.TabIndex = 0;
+            this.radioSingleFile.TabStop = true;
+            this.radioSingleFile.Text = "Archivo Individual";
+            this.radioSingleFile.UseVisualStyleBackColor = true;
+            // 
+            // radioFolder
+            // 
+            this.radioFolder.AutoSize = true;
+            this.radioFolder.Location = new System.Drawing.Point(150, 30);
+            this.radioFolder.Name = "radioFolder";
+            this.radioFolder.Size = new System.Drawing.Size(120, 21);
+            this.radioFolder.TabIndex = 1;
+            this.radioFolder.Text = "Carpeta Completa";
+            this.radioFolder.UseVisualStyleBackColor = true;
             // 
             // txtPrompt
             // 
@@ -249,6 +299,8 @@
             this.grpOutput.PerformLayout();
             this.grpOptions.ResumeLayout(false);
             this.grpOptions.PerformLayout();
+            this.grpProcessing.ResumeLayout(false);
+            this.grpProcessing.PerformLayout();
             this.grpFile.ResumeLayout(false);
             this.grpFile.PerformLayout();
             this.panelHeader.ResumeLayout(false);
@@ -269,6 +321,10 @@
         private System.Windows.Forms.GroupBox grpOptions;
         private System.Windows.Forms.RadioButton radioPdf;
         private System.Windows.Forms.RadioButton radioAss;
+        private System.Windows.Forms.RadioButton radioSrt;
+        private System.Windows.Forms.GroupBox grpProcessing;
+        private System.Windows.Forms.RadioButton radioSingleFile;
+        private System.Windows.Forms.RadioButton radioFolder;
         private System.Windows.Forms.TextBox txtPrompt;
         private System.Windows.Forms.GroupBox grpOutput;
         private System.Windows.Forms.TextBox txtOutput;

@@ -1,0 +1,19 @@
+1
+00:00:01,000 --> 00:00:04,000
+Hello, welcome to our video tutorial.
+
+2
+00:00:05,000 --> 00:00:08,000
+Today we will learn about artificial intelligence.
+
+3
+00:00:09,000 --> 00:00:12,000
+This technology is changing the world.
+
+4
+00:00:13,000 --> 00:00:16,000
+Thank you for watching our video.
+
+5
+00:00:17,000 --> 00:00:20,000
+Don't forget to subscribe to our channel. 
